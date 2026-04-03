@@ -99,10 +99,15 @@ export default function GuestPage() {
         );
       } catch { /* best effort */ }
     }
+    // Clear guest-specific sessionStorage keys
     sessionStorage.removeItem('guestToken');
     sessionStorage.removeItem('guestId');
-    sessionStorage.removeItem('profileToken');
-    sessionStorage.removeItem('activeProfile');
+    // profileToken and activeProfile live in localStorage — clear them here
+    // so no stale profile session bleeds through after the guest exits.
+    // accountToken is intentionally NOT cleared — the account session is separate
+    // from the guest/profile layer and should survive a guest exit.
+    localStorage.removeItem('profileToken');
+    localStorage.removeItem('activeProfile');
     router.push('/profiles');
   };
 

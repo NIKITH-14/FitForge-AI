@@ -48,6 +48,9 @@ function SetupForm() {
       const token = res.data.accessToken;
       localStorage.setItem('accessToken', token);
       setFreshToken(token);
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Setup] Register complete. accessToken captured:', !!token);
+      }
       setStep(2);
     } catch (e: unknown) {
       const err = e as { response?: { data?: { error?: string } } };
@@ -76,6 +79,9 @@ function SetupForm() {
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       const createdProfileId = profileRes.data?.profile?.id || profileRes.data?.id;
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[Setup] Profile created. ID:', createdProfileId, profileRes.data);
+      }
       if (!createdProfileId) {
         router.push('/profiles');
       } else {

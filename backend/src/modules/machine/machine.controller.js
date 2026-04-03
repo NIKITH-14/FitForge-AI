@@ -29,31 +29,29 @@ const FormDataSchema = z.object({
 const bootMachine = async (req, res, next) => {
     try {
         // Authenticated via authenticateMachine middleware (x-machine-token)
-        const machineTokenRaw = req.headers['x-machine-token'];
-        
-        // In a full implementation, we would query the `machine_accounts` table
-        // to find the user_id associated with this machine_token_hash.
-        // For Phase 1, we assume the machine token belongs to the primary admin account 
-        // to simulate a registered machine, or we return the first account if none is explicitly tied.
-        
-        // Fetch the first admin profile we created to represent the "machine owner"
-        const ownerResult = await pool.query('SELECT user_id FROM profiles WHERE is_admin = 1 LIMIT 1');
-        
-        if (ownerResult.rows.length === 0) {
-             return res.status(404).json({ error: 'No machine owner account found in system' });
-        }
-        
-        const ownerUserId = ownerResult.rows[0].user_id;
 
+        // TODO (Phase 2):
+        // bootMachine currently returns all non-guest profiles across all accounts
+        // to support shared single-machine / kiosk behavior.
+        //
+        // In a future multi-machine / multi-account deployment, machine tokens should
+        // be explicitly associated with a specific account or gym location so that
+        // each machine only loads the profiles intended for that machine.
+        //
+        // Do NOT keep this global profile loading logic once per-account machine
+        // scoping is introduced.
+
+        // Return all persistent profiles from all accounts.
+        // Guest sessions are stored in a separate `guest_sessions` table
+        // and are never included here.
         const profilesResult = await pool.query(
             `SELECT id, name, avatar_emoji, has_completed_onboarding, fitness_goal, is_admin,
                     CASE WHEN pin_hash IS NOT NULL THEN true ELSE false END as requires_pin
-             FROM profiles WHERE user_id = ? ORDER BY created_at ASC`,
-            [ownerUserId]
+             FROM profiles
+             ORDER BY created_at ASC`
         );
 
         res.json({
-            account: { user_id: ownerUserId },
             profiles: profilesResult.rows
         });
     } catch (err) {

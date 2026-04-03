@@ -1,12 +1,35 @@
 const express = require('express');
 const router = express.Router();
-const { getProfileById, getProfiles, createProfile, updateProfile, deleteProfile, selectProfile, verifyPin } = require('./profile.controller');
-const { authenticate, authenticateProfile, authenticateMachine } = require('../../middleware/auth');
+const {
+    getProfileById,
+    getProfiles,
+    createProfile,
+    updateProfile,
+    deleteProfile,
+    deleteBulkProfiles,
+    selectProfile,
+    verifyPin,
+} = require('./profile.controller');
+const { authenticate, authenticateProfile, authenticateMachine, authenticateAny } = require('../../middleware/auth');
 
 // Account-level management (requires account JWT)
 router.get('/', authenticate, getProfiles);
-router.get('/:id', authenticate, getProfileById);
+
+// GET /profiles/:id — uses authenticateAny (NARROW EXCEPTION).
+// Accepts both accountToken and profileToken because the dashboard BodyStats
+// component needs to fetch profile data using only a profileToken (no account JWT
+// is available after profile selection on the dashboard).
+// This is READ-ONLY — no data is mutated through this route.
+router.get('/:id', authenticateAny, getProfileById);
+
 router.post('/', authenticate, createProfile);
+
+// Bulk cleanup — permanently deletes ALL non-admin profiles for the account.
+// IMPORTANT: this route MUST be declared before /:id so Express routes the
+// literal path segment "bulk-cleanup" correctly (not as a :id param value).
+// Requires account JWT. Owner/admin profile is always preserved.
+router.delete('/bulk-cleanup', authenticate, deleteBulkProfiles);
+
 router.put('/:id', authenticate, updateProfile);
 router.delete('/:id', authenticate, deleteProfile);
 

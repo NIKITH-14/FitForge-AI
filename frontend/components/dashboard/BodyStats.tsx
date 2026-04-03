@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { useAuth } from '@/lib/AuthContext';
 
 interface BMIData {
@@ -25,6 +25,16 @@ interface DietData {
   protein_g?: number;
   fat_g?: number;
   carbs_g?: number;
+}
+
+interface BMIHistoryEntry {
+  id: string;
+  bmi: string | number;
+  category: string;
+  ideal_weight_kg: number;
+  recorded_at: string;
+  height_cm?: number;
+  weight_kg?: number;
 }
 
 const BMI_COLORS: Record<string, string> = {
@@ -55,11 +65,22 @@ function StatRow({ label, value, color }: { label: string; value: string; color?
   );
 }
 
+function formatDate(dateStr: string) {
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch {
+    return dateStr;
+  }
+}
+
 export default function BodyStats() {
   const { activeProfile } = useAuth();
   const [bmi, setBmi] = useState<BMIData | null>(null);
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [diet, setDiet] = useState<DietData | null>(null);
+  const [bmiHistory, setBmiHistory] = useState<BMIHistoryEntry[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -67,14 +88,16 @@ export default function BodyStats() {
     setLoading(true);
     setError('');
     try {
-      const [bmiRes, userRes, dietRes] = await Promise.allSettled([
+      const [bmiRes, userRes, dietRes, historyRes] = await Promise.allSettled([
         api.get('/bmi'),
         api.get('/profiles/' + activeProfile?.id),
         api.get('/diet/plan'),
+        api.get('/bmi/history'),
       ]);
       if (bmiRes.status === 'fulfilled') setBmi(bmiRes.value.data);
       if (userRes.status === 'fulfilled') setProfile(userRes.value.data);
       if (dietRes.status === 'fulfilled') setDiet(dietRes.value.data);
+      if (historyRes.status === 'fulfilled') setBmiHistory(historyRes.value.data.history || []);
     } catch {
       setError('Failed to load body stats');
     } finally {
@@ -111,11 +134,9 @@ export default function BodyStats() {
             Body Stats
           </h2>
         </div>
-        {error && (
-          <button onClick={load} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7A8AAD' }}>
-            <RefreshCw size={14} />
-          </button>
-        )}
+        <button onClick={load} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#7A8AAD' }}>
+          <RefreshCw size={14} />
+        </button>
       </div>
 
       {loading ? (
@@ -162,7 +183,7 @@ export default function BodyStats() {
                   background: `linear-gradient(90deg, #00C8FF, ${bmiColor})`,
                   transition: 'width 1s ease',
                 }} />
-                {/* Normal zone marker */}
+                {/* Normal zone markers */}
                 <div style={{ position: 'absolute', left: '14%', top: 0, bottom: 0, width: 2, background: 'rgba(0,255,136,0.4)' }} />
                 <div style={{ position: 'absolute', left: '40%', top: 0, bottom: 0, width: 2, background: 'rgba(0,255,136,0.4)' }} />
               </div>
@@ -186,7 +207,7 @@ export default function BodyStats() {
             <StatRow label="Ideal Weight" value={bmi?.ideal_weight_kg != null && !isNaN(bmi.ideal_weight_kg) ? `${bmi.ideal_weight_kg} kg` : '—'} />
           </div>
 
-          {/* BMI Reference */}
+          {/* BMI Reference ranges */}
           <div style={{ marginTop: 16, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {BMI_RANGES.map(r => (
               <div key={r.label} style={{
@@ -198,6 +219,82 @@ export default function BodyStats() {
               </div>
             ))}
           </div>
+
+          {/* ── BMI History ──────────────────────────────────────────────────────── */}
+          {bmiHistory.length > 0 && (
+            <div style={{ marginTop: 20, borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16 }}>
+              {/* Collapsible header */}
+              <button
+                onClick={() => setShowHistory(v => !v)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  width: '100%', background: 'none', border: 'none', cursor: 'pointer',
+                  padding: 0, marginBottom: showHistory ? 12 : 0,
+                }}
+              >
+                <p className="font-exo2" style={{ fontSize: 11, color: '#7A8AAD', letterSpacing: '0.15em', textTransform: 'uppercase' }}>
+                  BMI History ({bmiHistory.length} record{bmiHistory.length !== 1 ? 's' : ''})
+                </p>
+                {showHistory
+                  ? <ChevronUp size={14} style={{ color: '#7A8AAD' }} />
+                  : <ChevronDown size={14} style={{ color: '#7A8AAD' }} />
+                }
+              </button>
+
+              {showHistory && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {bmiHistory.map((entry, i) => {
+                    const bmiVal = !isNaN(parseFloat(String(entry.bmi))) ? parseFloat(String(entry.bmi)) : null;
+                    const color = entry.category ? (BMI_COLORS[entry.category] ?? '#00C8FF') : '#00C8FF';
+                    const isCurrent = i === 0;
+                    return (
+                      <div
+                        key={entry.id}
+                        style={{
+                          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                          padding: '8px 12px', borderRadius: 8,
+                          background: isCurrent ? `${color}0A` : 'rgba(255,255,255,0.02)',
+                          border: `1px solid ${isCurrent ? color + '22' : 'rgba(255,255,255,0.04)'}`,
+                        }}
+                      >
+                        <div>
+                          <span className="font-exo2" style={{ fontSize: 11, color: '#7A8AAD' }}>
+                            {formatDate(entry.recorded_at)}
+                          </span>
+                          {isCurrent && (
+                            <span style={{
+                              marginLeft: 6, fontSize: 9, color: color, fontFamily: 'var(--font-exo2)',
+                              background: `${color}18`, borderRadius: 99, padding: '1px 6px',
+                              border: `1px solid ${color}33`, letterSpacing: '0.08em',
+                            }}>
+                              LATEST
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                          {entry.weight_kg != null && (
+                            <span className="font-exo2" style={{ fontSize: 11, color: '#7A8AAD' }}>
+                              {entry.weight_kg} kg
+                            </span>
+                          )}
+                          <span className="font-orbitron" style={{ fontSize: 13, fontWeight: 700, color }}>
+                            {bmiVal != null ? bmiVal.toFixed(1) : '—'}
+                          </span>
+                          <span style={{
+                            fontSize: 10, color, fontFamily: 'var(--font-exo2)',
+                            background: `${color}18`, borderRadius: 99, padding: '1px 7px',
+                            border: `1px solid ${color}33`,
+                          }}>
+                            {entry.category || '—'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>

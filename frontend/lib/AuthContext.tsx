@@ -67,7 +67,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const savedProfileToken = localStorage.getItem('profileToken');
         if (savedProfile && savedProfileToken) {
             try {
-                setActiveProfileState(JSON.parse(savedProfile));
+                const parsed = JSON.parse(savedProfile);
+                if (process.env.NODE_ENV === 'development') {
+                    console.log('[Auth] Restored profile from storage:', parsed.id, parsed.name);
+                }
+                setActiveProfileState(parsed);
                 setProfileToken(savedProfileToken);
             } catch {
                 localStorage.removeItem('activeProfile');
@@ -113,6 +117,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const setActiveProfile = (profile: Profile, token: string) => {
+        if (process.env.NODE_ENV === 'development') {
+            console.log('[Auth] setActiveProfile:', profile.id, profile.name);
+        }
         localStorage.setItem('activeProfile', JSON.stringify(profile));
         localStorage.setItem('profileToken', token);
         setActiveProfileState(profile);

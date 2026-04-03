@@ -86,4 +86,26 @@ const calculateAndSaveBMI = async (req, res, next) => {
     }
 };
 
-module.exports = { getBMI, calculateAndSaveBMI, calculateBMIData };
+const getBMIHistory = async (req, res, next) => {
+    try {
+        // Return all bmi_records for this profile, newest first.
+        // Joined with the profile row so the caller gets the body stats
+        // that were in effect when each measurement was recorded.
+        const result = await pool.query(
+            `SELECT b.id, b.bmi, b.category, b.ideal_weight_kg, b.recorded_at,
+                    p.height_cm, p.weight_kg, p.age, p.gender, p.fitness_goal
+             FROM bmi_records b
+             JOIN profiles p ON p.id = b.profile_id
+             WHERE b.profile_id = ?
+             ORDER BY b.recorded_at DESC
+             LIMIT 50`,
+            [req.user.profile_id]
+        );
+        res.json({ history: result.rows });
+    } catch (err) {
+        next(err);
+    }
+};
+
+module.exports = { getBMI, calculateAndSaveBMI, calculateBMIData, getBMIHistory };
+

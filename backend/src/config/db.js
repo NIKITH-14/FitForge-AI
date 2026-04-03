@@ -213,9 +213,16 @@ function extractTableName(sql) {
 function mapRow(row) {
   if (!row) return row;
   const mapped = { ...row };
-  // Convert SQLite integers back to booleans for has_completed_intro
+  // Convert SQLite integers (0/1) back to real JS booleans.
+  // IMPORTANT: has_completed_onboarding must be a boolean so that:
+  //   - The profile token payload carries the correct value
+  //   - The dashboard guard (activeProfile.has_completed_onboarding) works correctly
+  //   - BodyStats and HeroBanner don't see a falsy integer 0 instead of false
   if ('has_completed_intro' in mapped) {
     mapped.has_completed_intro = mapped.has_completed_intro === 1 || mapped.has_completed_intro === true;
+  }
+  if ('has_completed_onboarding' in mapped) {
+    mapped.has_completed_onboarding = mapped.has_completed_onboarding === 1 || mapped.has_completed_onboarding === true;
   }
   return mapped;
 }

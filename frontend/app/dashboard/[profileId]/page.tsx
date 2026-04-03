@@ -27,20 +27,32 @@ export default function DashboardPage() {
   useEffect(() => {
     if (loading) return;
 
+    if (process.env.NODE_ENV === 'development') {
+      console.log('[Dashboard] Guard check:', {
+        loading,
+        hasToken: !!profileToken,
+        hasProfile: !!activeProfile,
+        profileId,
+        activeId: activeProfile?.id,
+        onboarded: activeProfile?.has_completed_onboarding,
+        isGuest: activeProfile?.is_guest,
+      });
+    }
+
     if (!profileToken || !activeProfile) {
-      // No profile selected — back to picker
+      if (process.env.NODE_ENV === 'development') console.log('[Dashboard] Redirect → /profiles (no token or no profile)');
       router.replace('/profiles');
       return;
     }
 
     if (profileId && activeProfile.id !== profileId) {
-      // URL profile doesn't match active profile — redirect to correct URL
+      if (process.env.NODE_ENV === 'development') console.log('[Dashboard] Redirect → correct URL (profile mismatch)', activeProfile.id, '≠', profileId);
       router.replace(`/dashboard/${activeProfile.id}`);
       return;
     }
 
     if (!activeProfile.has_completed_onboarding && !activeProfile.is_guest) {
-      // Profile created but onboarding skipped/incomplete — force them to onboarding
+      if (process.env.NODE_ENV === 'development') console.log('[Dashboard] Redirect → /onboarding (onboarding incomplete)', activeProfile.id);
       router.replace(`/onboarding/${activeProfile.id}`);
       return;
     }

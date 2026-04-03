@@ -32,7 +32,22 @@ const register = async (req, res, next) => {
             [userId, data.name, data.email, hashedPassword]
         );
 
-        res.status(201).json({ message: 'User registered successfully', userId });
+        // Return the same shape as login() so the frontend setup flow
+        // can immediately capture accessToken and proceed to profile creation.
+        const accessToken = generateAccessToken({ userId, email: data.email });
+        const refreshToken = generateRefreshToken({ userId, email: data.email });
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
+        res.status(201).json({
+            accessToken,
+            user: { id: userId, name: data.name, email: data.email }
+        });
     } catch (err) {
         if (err instanceof z.ZodError) {
             return res.status(400).json({ error: 'Invalid input', details: err.errors });
@@ -135,7 +150,7 @@ const endGuestSession = async (req, res, next) => {
 
 const getMe = async (req, res, next) => {
     try {
-        const userId = req.user.id;
+        const userId = req.user.userId;
         const result = await pool.query(
             'SELECT id, name, email, has_completed_intro FROM users WHERE id = ?',
             [userId]

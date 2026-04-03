@@ -59,4 +59,47 @@ const authenticateMachine = (req, res, next) => {
     next();
 };
 
-module.exports = { authenticate, authenticateProfile, authenticateGuest, authenticateMachine };
+// ── authenticateAny ───────────────────────────────────────────────────────────
+// Accepts EITHER an account-scoped JWT OR a profile-scoped JWT.
+//
+// NARROW USE ONLY — this middleware must only be applied to:
+//   - GET /profiles/:id
+// This allows the dashboard BodyStats component to fetch profile data using
+// only a profileToken (which is all that's available post-login dashboard).
+//
+// Do NOT apply this to write operations (PUT / DELETE).
+// All write routes must continue to use `authenticate` (account JWT only).
+//
+// req.user will be populated from whichever token validates successfully.
+// Downstream handlers must use req.user.userId OR req.user.profile_id as needed.
+const authenticateAny = (req, res, next) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Missing or invalid authorization header' });
+    }
+    const token = authHeader.split(' ')[1];
+
+    // Try account token first (preferred)
+    try {
+        const decoded = verifyAccessToken(token);
+        req.user = decoded;
+        return next();
+    } catch {
+        // Not a valid account token — try profile token
+    }
+
+    // Try profile-scoped token
+    try {
+        const decoded = verifyToken(token);
+        if (decoded.profile_id) {
+            req.user = decoded;
+            return next();
+        }
+    } catch {
+        // Not a valid profile token either
+    }
+
+    return res.status(401).json({ error: 'Invalid or expired token' });
+};
+
+module.exports = { authenticate, authenticateProfile, authenticateGuest, authenticateMachine, authenticateAny };
