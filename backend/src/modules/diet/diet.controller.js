@@ -1,16 +1,16 @@
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID: uuidv4 } = require('crypto');
 const pool = require('../../config/db');
 
 const generateDietPlan = async (req, res, next) => {
     try {
         const user = await pool.query(
-            'SELECT height_cm, weight_kg, age, gender, fitness_goal FROM users WHERE id = ?',
-            [req.user.userId]
+            'SELECT user_id, height_cm, weight_kg, age, gender, fitness_goal FROM profiles WHERE id = ?',
+            [req.user.profile_id]
         );
         if (!user.rows[0]?.height_cm) {
             return res.status(400).json({ error: 'Complete your profile onboarding first.' });
         }
-        const { height_cm, weight_kg, age, gender, fitness_goal } = user.rows[0];
+        const { user_id, height_cm, weight_kg, age, gender, fitness_goal } = user.rows[0];
 
         // BMR - Mifflin-St Jeor
         const bmr = gender === 'male'
@@ -31,19 +31,19 @@ const generateDietPlan = async (req, res, next) => {
         const carbs_g = parseFloat(((daily_calories - protein_cals - fat_cals) / 4).toFixed(1));
 
         // SQLite UPSERT: check if exists first, then insert or update
-        const existing = await pool.query('SELECT id FROM nutrition_targets WHERE user_id = ?', [req.user.userId]);
+        const existing = await pool.query('SELECT id FROM nutrition_targets WHERE profile_id = ?', [req.user.profile_id]);
         let result;
         if (existing.rows.length > 0) {
             await pool.query(
-                `UPDATE nutrition_targets SET bmr=?, tdee=?, daily_calories=?, protein_g=?, fat_g=?, carbs_g=?, created_at=datetime('now') WHERE user_id=?`,
-                [parseFloat(bmr.toFixed(0)), tdee, parseFloat(daily_calories.toFixed(0)), protein_g, fat_g, carbs_g, req.user.userId]
+                `UPDATE nutrition_targets SET bmr=?, tdee=?, daily_calories=?, protein_g=?, fat_g=?, carbs_g=?, created_at=datetime('now') WHERE profile_id=?`,
+                [parseFloat(bmr.toFixed(0)), tdee, parseFloat(daily_calories.toFixed(0)), protein_g, fat_g, carbs_g, req.user.profile_id]
             );
-            result = await pool.query('SELECT * FROM nutrition_targets WHERE user_id = ?', [req.user.userId]);
+            result = await pool.query('SELECT * FROM nutrition_targets WHERE profile_id = ?', [req.user.profile_id]);
         } else {
             const id = uuidv4();
             await pool.query(
-                `INSERT INTO nutrition_targets (id, user_id, bmr, tdee, daily_calories, protein_g, fat_g, carbs_g) VALUES (?,?,?,?,?,?,?,?)`,
-                [id, req.user.userId, parseFloat(bmr.toFixed(0)), tdee, parseFloat(daily_calories.toFixed(0)), protein_g, fat_g, carbs_g]
+                `INSERT INTO nutrition_targets (id, user_id, profile_id, bmr, tdee, daily_calories, protein_g, fat_g, carbs_g) VALUES (?,?,?,?,?,?,?,?,?)`,
+                [id, user_id, req.user.profile_id, parseFloat(bmr.toFixed(0)), tdee, parseFloat(daily_calories.toFixed(0)), protein_g, fat_g, carbs_g]
             );
             result = await pool.query('SELECT * FROM nutrition_targets WHERE id = ?', [id]);
         }
@@ -64,8 +64,8 @@ const generateDietPlan = async (req, res, next) => {
 const getDietPlan = async (req, res, next) => {
     try {
         const result = await pool.query(
-            'SELECT * FROM nutrition_targets WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
-            [req.user.userId]
+            'SELECT * FROM nutrition_targets WHERE profile_id = ? ORDER BY created_at DESC LIMIT 1',
+            [req.user.profile_id]
         );
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'No diet plan found. Please generate one.' });

@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const { uploadFoodImage, addManualEntry, getFoodLog, updateFoodLog, deleteFoodLog } = require('./nutrition.controller');
-const { authenticate } = require('../../middleware/auth');
+const { authenticateProfile } = require('../../middleware/auth');
 
 const upload = multer({
     storage: multer.memoryStorage(),
@@ -15,10 +15,10 @@ const upload = multer({
     },
 });
 
-router.get('/log', authenticate, getFoodLog);
-router.post('/log', authenticate, addManualEntry);
-router.post('/upload', authenticate, upload.single('food_image'), uploadFoodImage);
-router.put('/log/:id', authenticate, updateFoodLog);
-router.delete('/log/:id', authenticate, deleteFoodLog);
+router.get('/log', authenticateProfile, getFoodLog);
+router.post('/log', authenticateProfile, addManualEntry);
+router.post('/upload', authenticateProfile, upload.single('food_image'), uploadFoodImage);
+router.put('/log/:id', authenticateProfile, updateFoodLog);
+router.delete('/log/:id', authenticateProfile, deleteFoodLog);
 
 module.exports = router;

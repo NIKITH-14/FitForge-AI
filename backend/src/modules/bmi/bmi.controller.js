@@ -1,4 +1,4 @@
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID: uuidv4 } = require('crypto');
 const pool = require('../../config/db');
 
 const calculateBMIData = (weight_kg, height_cm, age, gender) => {
@@ -41,10 +41,10 @@ const calculateBMIData = (weight_kg, height_cm, age, gender) => {
 const getBMI = async (req, res, next) => {
     try {
         const result = await pool.query(
-            `SELECT b.*, u.height_cm, u.weight_kg, u.age, u.gender, u.fitness_goal
-       FROM bmi_records b JOIN users u ON u.id = b.user_id
-       WHERE b.user_id = ? ORDER BY b.recorded_at DESC LIMIT 1`,
-            [req.user.userId]
+            `SELECT b.*, p.height_cm, p.weight_kg, p.age, p.gender, p.fitness_goal
+       FROM bmi_records b JOIN profiles p ON p.id = b.profile_id
+       WHERE b.profile_id = ? ORDER BY b.recorded_at DESC LIMIT 1`,
+            [req.user.profile_id]
         );
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'No BMI record found. Please complete onboarding.' });
@@ -58,11 +58,11 @@ const getBMI = async (req, res, next) => {
 const calculateAndSaveBMI = async (req, res, next) => {
     try {
         const user = await pool.query(
-            'SELECT height_cm, weight_kg, age, gender, fitness_goal FROM users WHERE id = ?',
-            [req.user.userId]
+            'SELECT user_id, height_cm, weight_kg, age, gender, fitness_goal FROM profiles WHERE id = ?',
+            [req.user.profile_id]
         );
         if (user.rows.length === 0) return res.status(404).json({ error: 'User not found' });
-        const { height_cm, weight_kg, age, gender, fitness_goal } = user.rows[0];
+        const { user_id, height_cm, weight_kg, age, gender, fitness_goal } = user.rows[0];
         if (!height_cm || !weight_kg || !age || !gender) {
             return res.status(400).json({ error: 'Complete your profile first (height, weight, age, gender)' });
         }
@@ -76,8 +76,8 @@ const calculateAndSaveBMI = async (req, res, next) => {
 
         const id = uuidv4();
         await pool.query(
-            `INSERT INTO bmi_records (id, user_id, bmi, category, ideal_weight_kg) VALUES (?,?,?,?,?)`,
-            [id, req.user.userId, data.bmi, data.category, data.ideal_weight_kg]
+            `INSERT INTO bmi_records (id, user_id, profile_id, bmi, category, ideal_weight_kg) VALUES (?,?,?,?,?,?)`,
+            [id, user_id, req.user.profile_id, data.bmi, data.category, data.ideal_weight_kg]
         );
 
         res.json({ ...data, goal_suggestion: goalSuggestion, fitness_goal });

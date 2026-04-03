@@ -1,16 +1,459 @@
 @import "tailwindcss";
 
+/* ─── Phase 2 Design System ─── */
 :root {
-  --bg-primary: #0a0a1a;
-  --bg-secondary: #0f0f2e;
-  --bg-card: #13132b;
-  --accent-purple: #7c3aed;
-  --accent-violet: #6d28d9;
-  --accent-cyan: #06b6d4;
-  --accent-green: #10b981;
-  --text-primary: #f1f5f9;
-  --text-muted: #94a3b8;
-  --border: rgba(124, 58, 237, 0.25);
+  --bg-primary: #080810;
+  --bg-secondary: #0d0d1a;
+  --bg-card: #10101f;
+  --accent-purple: #7B2FF7;
+  --accent-violet: #6B1FE7;
+  --accent-cyan: #00C8FF;
+  --accent-green: #00E5A0;
+  --accent-red: #FF3366;
+  --text-primary: #F0F4FF;
+  --text-muted: #7A8AAD;
+  --border: rgba(0, 200, 255, 0.15);
+  --border-purple: rgba(123, 47, 247, 0.3);
+  --glow-cyan: 0 0 30px rgba(0, 200, 255, 0.4);
+  --glow-purple: 0 0 30px rgba(123, 47, 247, 0.4);
+  --font-orbitron: 'Orbitron', sans-serif;
+  --font-exo2: 'Exo 2', sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-exo2), 'Exo 2', sans-serif;
+  height: 100%;
+  /* overflow:hidden is only for boot/profiles screens; dashboard overrides this via .allow-scroll */
+}
+
+/* Allow the dashboard main area to scroll */
+.allow-scroll {
+  overflow-y: auto !important;
+}
+
+
+.font-orbitron { font-family: var(--font-orbitron); }
+.font-exo2 { font-family: var(--font-exo2); }
+
+/* ─── Boot Screen Animations ─── */
+@keyframes bootScale {
+  0% { transform: scale(0.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes bootGlow {
+  0%, 100% { box-shadow: 0 0 40px rgba(0,200,255,0.5), 0 0 80px rgba(123,47,247,0.3), inset 0 0 40px rgba(0,200,255,0.1); }
+  50% { box-shadow: 0 0 70px rgba(0,200,255,0.9), 0 0 120px rgba(123,47,247,0.6), inset 0 0 60px rgba(0,200,255,0.2); }
+}
+
+@keyframes spinRing {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeUpTitle {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); letter-spacing: 0.3em; }
+  to { opacity: 1; transform: translateY(0) scale(1); letter-spacing: 0.5em; }
+}
+
+@keyframes fadeInSub {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes bootProgress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+
+@keyframes screenFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; pointer-events: none; }
+}
+
+@keyframes screenFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-boot-glow { 
+  animation: bootScale 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards, bootGlow 1.8s ease-in-out infinite 1.2s; 
+}
+.animate-spin-ring { animation: spinRing 3s linear infinite; }
+.animate-fade-up-title { animation: fadeUpTitle 0.8s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-in-sub { animation: fadeInSub 0.6s ease both; }
+.animate-screen-fade-out { animation: screenFadeOut 0.5s ease forwards; }
+.animate-screen-fade-in { animation: screenFadeIn 0.5s ease both; }
+
+@keyframes fadeUpSection {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up { animation: fadeUpSection 0.6s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.delay-100 { animation-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; }
+.delay-400 { animation-delay: 400ms; }
+.delay-500 { animation-delay: 500ms; }
+.delay-600 { animation-delay: 600ms; }
+
+/* ─── Profile Picker ─── */
+@keyframes profileFadeIn {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes profileShakeX {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-8px); }
+  80% { transform: translateX(4px); }
+}
+
+.animate-profile-in { animation: profileFadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-shake-x { animation: profileShakeX 0.4s ease; }
+
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 16px;
+  border-radius: 16px;
+  border: 2px solid rgba(0, 200, 255, 0.1);
+  background: rgba(16, 16, 31, 0.6);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 130px;
+  min-height: 170px;
+  justify-content: center;
+  position: relative;
+  backdrop-filter: blur(10px);
+}
+
+.profile-card:hover {
+  transform: scale(1.08) translateY(-4px);
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 30px rgba(0,200,255,0.35), 0 0 60px rgba(0,200,255,0.15);
+  background: rgba(0, 200, 255, 0.06);
+}
+
+.profile-card:hover .profile-name {
+  color: var(--accent-cyan);
+}
+
+.profile-card-guest {
+  border-style: dashed;
+  border-color: rgba(122, 138, 173, 0.3);
+  background: rgba(16, 16, 31, 0.3);
+}
+
+.profile-card-add {
+  border-style: dashed;
+  border-color: rgba(123, 47, 247, 0.3);
+  background: rgba(123, 47, 247, 0.05);
+}
+
+.profile-card-add:hover {
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 30px rgba(123,47,247,0.35), 0 0 60px rgba(123,47,247,0.15);
+  background: rgba(123, 47, 247, 0.1);
+}
+
+.profile-avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid rgba(0, 200, 255, 0.25);
+  background: rgba(0,200,255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 32px;
+  transition: all 0.25s ease;
+}
+
+.profile-card:hover .profile-avatar {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 20px rgba(0,200,255,0.3);
+}
+
+.profile-name {
+  font-family: var(--font-exo2);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  transition: color 0.25s;
+  letter-spacing: 0.02em;
+}
+
+.goal-badge {
+  font-family: var(--font-exo2);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 99px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.goal-strength { background: rgba(255,100,50,0.2); color: #FF6432; border: 1px solid rgba(255,100,50,0.3); }
+.goal-aesthetic { background: rgba(123,47,247,0.2); color: #B06CFF; border: 1px solid rgba(123,47,247,0.3); }
+.goal-fat_loss { background: rgba(0,200,255,0.15); color: var(--accent-cyan); border: 1px solid rgba(0,200,255,0.3); }
+.goal-default { background: rgba(122,138,173,0.15); color: var(--text-muted); border: 1px solid rgba(122,138,173,0.2); }
+
+/* ─── PIN Dots ─── */
+.pin-dot {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: 2px solid var(--accent-cyan);
+  background: transparent;
+  transition: all 0.15s ease;
+}
+
+.pin-dot.filled {
+  background: var(--accent-cyan);
+  box-shadow: 0 0 10px rgba(0,200,255,0.6);
+}
+
+.pin-dot.error {
+  border-color: var(--accent-red);
+  background: var(--accent-red);
+  box-shadow: 0 0 10px rgba(255,51,102,0.6);
+}
+
+/* ─── Guest Banner ─── */
+.guest-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(255, 51, 102, 0.12);
+  border-bottom: 1px solid rgba(255, 51, 102, 0.3);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 10px 24px;
+  font-family: var(--font-exo2);
+  font-size: 13px;
+  font-weight: 600;
+  color: #FF6688;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Glassmorphism card ─── */
+.glass-card {
+  background: rgba(16, 16, 31, 0.7);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+/* ─── Gradient text ─── */
+.gradient-text {
+  background: linear-gradient(135deg, #00C8FF 0%, #7B2FF7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-text-gold {
+  background: linear-gradient(135deg, #FFD700 0%, #FF8C00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ─── Buttons ─── */
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+  color: white;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: var(--font-exo2);
+  letter-spacing: 0.04em;
+  min-height: 44px;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 40px rgba(123, 47, 247, 0.4);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  padding: 11px 28px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: var(--font-exo2);
+  min-height: 44px;
+}
+
+.btn-secondary:hover {
+  border-color: var(--accent-cyan);
+  background: rgba(0, 200, 255, 0.08);
+}
+
+/* ─── Input styles ─── */
+.input-field {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 13px 16px;
+  color: var(--text-primary);
+  font-size: 15px;
+  outline: none;
+  transition: all 0.3s;
+  font-family: var(--font-exo2);
+  min-height: 44px;
+}
+
+.input-field:focus {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 0 3px rgba(0, 200, 255, 0.12);
+}
+
+.input-field::placeholder { color: var(--text-muted); }
+
+/* ─── Progress bars ─── */
+.progress-bar {
+  height: 2px;
+  background: rgba(255,255,255,0.07);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan));
+  animation: bootProgress 2.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ─── Sidebar ─── */
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.25s;
+  min-height: 44px;
+}
+
+.sidebar-link:hover, .sidebar-link.active {
+  background: rgba(0, 200, 255, 0.1);
+  color: var(--text-primary);
+}
+
+.sidebar-link.active {
+  border-left: 3px solid var(--accent-cyan);
+  color: var(--accent-cyan);
+}
+
+/* ─── Score ring ─── */
+.score-ring {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background: conic-gradient(var(--accent-cyan) var(--score), rgba(255,255,255,0.05) 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.score-ring::after {
+  content: '';
+  position: absolute;
+  inset: 10px;
+  background: var(--bg-card);
+  border-radius: 50%;
+}
+
+/* ─── Step indicator ─── */
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  transition: all 0.3s;
+}
+.step-dot.active {
+  background: var(--accent-cyan);
+  box-shadow: 0 0 8px rgba(0,200,255,0.5);
+  width: 24px;
+  border-radius: 4px;
+}
+.step-dot.done { background: var(--accent-purple); }
+
+/* ─── Shimmer ─── */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.shimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+/* ─── Float ─── */
+@keyframes floatUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-float { animation: floatUp 0.6s ease both; }
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(0,200,255,0.3); }
+  50% { box-shadow: 0 0 40px rgba(0,200,255,0.6); }
+}
+
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb { background: var(--accent-purple); border-radius: 99px; }
+
+/* ─── Dashboard reset (allow scroll inside dashboard) ─── */
+.allow-scroll { overflow: auto; }
+
+@media (max-width: 768px) {
+  .sidebar { display: none; }
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }

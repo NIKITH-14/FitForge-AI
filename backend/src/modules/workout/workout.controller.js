@@ -1,4 +1,4 @@
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID: uuidv4 } = require('crypto');
 const pool = require('../../config/db');
 
 const EXERCISE_LIBRARY = {
@@ -75,8 +75,8 @@ const generatePlanLogic = (goal, weight_kg) => {
 const getWorkoutPlan = async (req, res, next) => {
     try {
         const result = await pool.query(
-            'SELECT * FROM workout_plans WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
-            [req.user.userId]
+            'SELECT * FROM workout_plans WHERE profile_id = ? ORDER BY created_at DESC LIMIT 1',
+            [req.user.profile_id]
         );
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'No plan found. Please generate one.' });
@@ -95,18 +95,18 @@ const getWorkoutPlan = async (req, res, next) => {
 const generateWorkoutPlan = async (req, res, next) => {
     try {
         const user = await pool.query(
-            'SELECT fitness_goal, weight_kg FROM users WHERE id = ?',
-            [req.user.userId]
+            'SELECT user_id, fitness_goal, weight_kg FROM profiles WHERE id = ?',
+            [req.user.profile_id]
         );
         if (!user.rows[0]?.fitness_goal) {
             return res.status(400).json({ error: 'Complete onboarding first to generate a plan.' });
         }
-        const { fitness_goal, weight_kg } = user.rows[0];
+        const { user_id, fitness_goal, weight_kg } = user.rows[0];
         const plan = generatePlanLogic(fitness_goal, weight_kg);
         const id = uuidv4();
         await pool.query(
-            `INSERT INTO workout_plans (id, user_id, goal, days_per_week, plan_json) VALUES (?,?,?,?,?)`,
-            [id, req.user.userId, fitness_goal, plan.days_per_week, JSON.stringify(plan)]
+            `INSERT INTO workout_plans (id, user_id, profile_id, goal, days_per_week, plan_json) VALUES (?,?,?,?,?,?)`,
+            [id, user_id, req.user.profile_id, fitness_goal, plan.days_per_week, JSON.stringify(plan)]
         );
         const result = await pool.query('SELECT * FROM workout_plans WHERE id = ?', [id]);
         const row = result.rows[0];

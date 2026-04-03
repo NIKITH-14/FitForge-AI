@@ -6,22 +6,34 @@ FitForge AI is a full-stack, AI-powered fitness web application that integrates 
 
 ## 🚀 How to Run
 
+### Option 1: One-Click Launcher (Windows)
+
+Simply double-click the `START.bat` file in the root directory. 
+
+This script will automatically:
+1. Install backend and frontend dependencies if missing.
+2. Backup the SQLite database (keeping the last 7 days).
+3. Start the Backend API (Port 5000) and Frontend App (Port 3000) in separate windows.
+4. Launch the application in Chrome **Kiosk Mode** (full-screen).
+
+### Option 2: Manual Start
+
 You need **two terminals** open simultaneously.
 
-### 1. Start the Backend (API — Port 5000)
+**1. Start the Backend (API — Port 5000)**
 
 ```bash
-cd FitForge-AI/backend
+cd backend
 npm install        # first time only
 npm run dev
 ```
 
 > The SQLite database (`fitness_platform.db`) is **created automatically** on first run — no setup needed.
 
-### 2. Start the Frontend (Next.js — Port 3000)
+**2. Start the Frontend (Next.js — Port 3000)**
 
 ```bash
-cd FitForge-AI/frontend
+cd frontend
 npm install        # first time only
 npm run dev
 ```
@@ -34,6 +46,7 @@ Then open **http://localhost:3000** in your browser.
 
 ```
 FitForge-AI/
+├── START.bat                   # One-click Windows launcher
 ├── backend/                    # Node.js REST API
 │   ├── server.js               # Entry point (runs on port 5000)
 │   ├── fitness_platform.db     # SQLite database (auto-created)
@@ -190,6 +203,9 @@ FRONTEND_URL=http://localhost:3000
 3. **Express 5 Compatibility** — Fixed a wildcard route bug (`app.use('*')` → `app.use(...)`) incompatible with Express 5.
 4. **pg-compatible Wrapper** — A custom `db.js` wrapper translates `pool.query()` calls to SQLite, making all controllers work without any rewrite of their business logic.
 5. **Auto Schema Creation** — All database tables are created automatically when the backend starts for the first time.
+6. **One-Click Launcher** — Added `START.bat` to automatically install dependencies, backup the database, launch the backend and frontend concurrently, and open the app in full-screen Kiosk mode.
+7. **Profile Management Fixes** — Updated backend allowing any logged-in user to create profiles, and fixed profile selection authentication for a seamless multi-user flow.
+8. **UI/UX Data Graceful Degradation** — Resolved dashboard bugs where invalid or missing numerical data displayed as `NaN`; data now gracefully defaults to sensible placeholders.
 
 ---
 

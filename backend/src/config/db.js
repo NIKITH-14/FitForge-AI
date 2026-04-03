@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS bmi_records (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  profile_id TEXT REFERENCES profiles(id) ON DELETE CASCADE,
   bmi REAL NOT NULL,
   category TEXT NOT NULL,
   ideal_weight_kg REAL,
@@ -46,7 +47,8 @@ CREATE TABLE IF NOT EXISTS bmi_records (
 
 CREATE TABLE IF NOT EXISTS nutrition_targets (
   id TEXT PRIMARY KEY,
-  user_id TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  profile_id TEXT REFERENCES profiles(id) ON DELETE CASCADE,
   bmr REAL NOT NULL,
   tdee REAL NOT NULL,
   daily_calories INTEGER NOT NULL,
@@ -59,6 +61,7 @@ CREATE TABLE IF NOT EXISTS nutrition_targets (
 CREATE TABLE IF NOT EXISTS workout_plans (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  profile_id TEXT REFERENCES profiles(id) ON DELETE CASCADE,
   goal TEXT NOT NULL,
   days_per_week INTEGER NOT NULL,
   plan_json TEXT NOT NULL,
@@ -68,6 +71,7 @@ CREATE TABLE IF NOT EXISTS workout_plans (
 CREATE TABLE IF NOT EXISTS machine_sessions (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  profile_id TEXT REFERENCES profiles(id) ON DELETE CASCADE,
   machine_id TEXT,
   exercise_name TEXT NOT NULL,
   rep_count INTEGER NOT NULL DEFAULT 0,
@@ -81,6 +85,7 @@ CREATE TABLE IF NOT EXISTS form_analyses (
   id TEXT PRIMARY KEY,
   session_id TEXT NOT NULL REFERENCES machine_sessions(id) ON DELETE CASCADE,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  profile_id TEXT REFERENCES profiles(id) ON DELETE CASCADE,
   joint_angles_json TEXT,
   errors_json TEXT,
   avg_form_score REAL CHECK(avg_form_score >= 0 AND avg_form_score <= 100),
@@ -91,6 +96,7 @@ CREATE TABLE IF NOT EXISTS form_analyses (
 CREATE TABLE IF NOT EXISTS ai_recommendations (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  profile_id TEXT REFERENCES profiles(id) ON DELETE CASCADE,
   session_id TEXT REFERENCES machine_sessions(id) ON DELETE SET NULL,
   recommendation_text TEXT NOT NULL,
   category TEXT NOT NULL DEFAULT 'general',
@@ -100,6 +106,7 @@ CREATE TABLE IF NOT EXISTS ai_recommendations (
 CREATE TABLE IF NOT EXISTS food_logs (
   id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  profile_id TEXT REFERENCES profiles(id) ON DELETE CASCADE,
   logged_at TEXT NOT NULL DEFAULT (date('now')),
   meal_type TEXT NOT NULL DEFAULT 'snack' CHECK(meal_type IN ('breakfast','lunch','dinner','snack')),
   items_json TEXT NOT NULL DEFAULT '[]',
@@ -109,6 +116,7 @@ CREATE TABLE IF NOT EXISTS food_logs (
   total_carbs REAL NOT NULL DEFAULT 0,
   image_url TEXT
 );
+
 `;
 
 // Run schema creation

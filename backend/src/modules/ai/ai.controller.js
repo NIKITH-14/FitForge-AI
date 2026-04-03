@@ -1,4 +1,4 @@
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID: uuidv4 } = require('crypto');
 const pool = require('../../config/db');
 
 const analyzeAndRecommend = async (req, res, next) => {
@@ -11,9 +11,9 @@ const analyzeAndRecommend = async (req, res, next) => {
               fa.avg_form_score, fa.errors_json, ms.timestamp
        FROM machine_sessions ms
        LEFT JOIN form_analyses fa ON fa.session_id = ms.id
-       WHERE ms.user_id = ?
+       WHERE ms.profile_id = ?
        ORDER BY ms.timestamp DESC LIMIT 5`,
-            [userId]
+            [req.user.profile_id]
         );
 
         const rows = sessions.rows;
@@ -79,8 +79,8 @@ const analyzeAndRecommend = async (req, res, next) => {
 
         for (const rec of recommendations) {
             await pool.query(
-                `INSERT INTO ai_recommendations (id, user_id, session_id, recommendation_text, category) VALUES (?,?,?,?,?)`,
-                [uuidv4(), userId, session_id || null, rec.text, rec.category]
+                `INSERT INTO ai_recommendations (id, user_id, profile_id, session_id, recommendation_text, category) VALUES (?,?,?,?,?,?)`,
+                [uuidv4(), userId, req.user.profile_id, session_id || null, rec.text, rec.category]
             );
         }
 
@@ -93,8 +93,8 @@ const analyzeAndRecommend = async (req, res, next) => {
 const getRecommendations = async (req, res, next) => {
     try {
         const result = await pool.query(
-            `SELECT * FROM ai_recommendations WHERE user_id = ? ORDER BY created_at DESC LIMIT 10`,
-            [req.user.userId]
+            `SELECT * FROM ai_recommendations WHERE profile_id = ? ORDER BY created_at DESC LIMIT 10`,
+            [req.user.profile_id]
         );
         res.json({ recommendations: result.rows });
     } catch (err) {

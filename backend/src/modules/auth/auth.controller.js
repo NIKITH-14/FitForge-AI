@@ -1,8 +1,8 @@
 const bcrypt = require('bcryptjs');
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID } = require('crypto');
 const { z } = require('zod');
 const pool = require('../../config/db');
-const { generateAccessToken, generateRefreshToken } = require('../../config/jwt');
+const { generateAccessToken, generateRefreshToken, generateGuestToken } = require('../../config/jwt');
 
 const RegisterSchema = z.object({
     name: z.string().min(2).max(100),
@@ -18,31 +18,25 @@ const LoginSchema = z.object({
 const register = async (req, res, next) => {
     try {
         const data = RegisterSchema.parse(req.body);
-        const existing = await pool.query('SELECT id FROM users WHERE email = ?', [data.email]);
-        if (existing.rows.length > 0) {
+
+        const existingUser = await pool.query('SELECT id FROM users WHERE email = ?', [data.email]);
+        if (existingUser.rows.length > 0) {
             return res.status(409).json({ error: 'Email already registered' });
         }
-        const passwordHash = await bcrypt.hash(data.password, 12);
-        const id = uuidv4();
+
+        const hashedPassword = await bcrypt.hash(data.password, 10);
+        const userId = randomUUID();
+
         await pool.query(
-            `INSERT INTO users (id, name, email, password_hash) VALUES (?,?,?,?)`,
-            [id, data.name, data.email, passwordHash]
+            'INSERT INTO users (id, name, email, password_hash) VALUES (?, ?, ?, ?)',
+            [userId, data.name, data.email, hashedPassword]
         );
-        const userResult = await pool.query(
-            'SELECT id, name, email, has_completed_intro, created_at FROM users WHERE id = ?',
-            [id]
-        );
-        const user = userResult.rows[0];
-        const accessToken = generateAccessToken({ userId: user.id, email: user.email });
-        const refreshToken = generateRefreshToken({ userId: user.id });
-        res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 7 * 24 * 60 * 60 * 1000,
-        });
-        res.status(201).json({ user, accessToken });
+
+        res.status(201).json({ message: 'User registered successfully', userId });
     } catch (err) {
+        if (err instanceof z.ZodError) {
+            return res.status(400).json({ error: 'Invalid input', details: err.errors });
+        }
         next(err);
     }
 };
@@ -50,29 +44,33 @@ const register = async (req, res, next) => {
 const login = async (req, res, next) => {
     try {
         const data = LoginSchema.parse(req.body);
-        const result = await pool.query(
-            'SELECT id, name, email, password_hash, has_completed_intro, fitness_goal, height_cm, weight_kg FROM users WHERE email = ?',
-            [data.email]
-        );
+
+        const result = await pool.query('SELECT * FROM users WHERE email = ?', [data.email]);
         if (result.rows.length === 0) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
+
         const user = result.rows[0];
-        const valid = await bcrypt.compare(data.password, user.password_hash);
-        if (!valid) {
+        const isMatch = await bcrypt.compare(data.password, user.password_hash);
+        if (!isMatch) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
-        const { password_hash, ...safeUser } = user;
+
         const accessToken = generateAccessToken({ userId: user.id, email: user.email });
-        const refreshToken = generateRefreshToken({ userId: user.id });
+        const refreshToken = generateRefreshToken({ userId: user.id, email: user.email });
+
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'strict',
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
-        res.json({ user: safeUser, accessToken });
+
+        res.json({ accessToken, user: { id: user.id, name: user.name, email: user.email } });
     } catch (err) {
+        if (err instanceof z.ZodError) {
+            return res.status(400).json({ error: 'Invalid input', details: err.errors });
+        }
         next(err);
     }
 };
@@ -98,4 +96,55 @@ const refresh = async (req, res, next) => {
     }
 };
 
-module.exports = { register, login, logout, refresh };
+const createGuestSession = async (req, res, next) => {
+    try {
+        const guestId = randomUUID();
+        const machineId = "machine_test_1"; 
+        
+        const expiresAtDate = new Date();
+        expiresAtDate.setHours(expiresAtDate.getHours() + 4);
+
+        await pool.query(
+            `INSERT INTO guest_sessions (id, machine_id, temp_data_json, expires_at) VALUES (?,?,?,?)`,
+            [guestId, machineId, '{}', expiresAtDate.toISOString()]
+        );
+
+        const guestToken = generateGuestToken({ guest_id: guestId, machine_id: machineId });
+        
+        res.status(201).json({ guestToken, guestId, expiresAt: expiresAtDate.toISOString() });
+    } catch (err) {
+        next(err);
+    }
+};
+
+const endGuestSession = async (req, res, next) => {
+     try {
+        const { id } = req.params;
+        
+        if (req.user.guest_id !== id) {
+             return res.status(403).json({ error: 'Not authorized to terminate this session' });
+        }
+
+        await pool.query(`DELETE FROM guest_sessions WHERE id = ?`, [id]);
+        
+        res.json({ message: 'Guest session terminated and ephemeral data wiped.' });
+    } catch (err) {
+        next(err);
+    }
+};
+
+const getMe = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        const result = await pool.query(
+            'SELECT id, name, email, has_completed_intro FROM users WHERE id = ?',
+            [userId]
+        );
+        if (result.rows.length === 0) return res.status(404).json({ error: 'User not found' });
+        res.json(result.rows[0]);
+    } catch (err) {
+        next(err);
+    }
+};
+
+module.exports = { register, login, logout, refresh, createGuestSession, endGuestSession, getMe };

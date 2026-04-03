@@ -6,63 +6,132 @@ interface User {
     id: string;
     name: string;
     email: string;
-    fitness_goal?: string;
     has_completed_intro?: boolean;
-    height_cm?: number;
-    weight_kg?: number;
+}
+
+interface Profile {
+    id: string;
+    name: string;
+    avatar_emoji?: string;
+    fitness_goal?: string;
+    has_completed_onboarding?: boolean;
+    is_admin?: boolean;
+    has_pin?: boolean;
+    is_guest?: boolean;
 }
 
 interface AuthContextType {
+    // Layer 1: Account
     user: User | null;
+    accountToken: string | null;
     loading: boolean;
     login: (email: string, password: string) => Promise<void>;
     register: (name: string, email: string, password: string) => Promise<void>;
-    logout: () => void;
+    switchProfile: () => void;
+    fullLogout: () => void;
     refreshUser: () => void;
+    // Layer 2: Profile
+    activeProfile: Profile | null;
+    profileToken: string | null;
+    setActiveProfile: (profile: Profile, token: string) => void;
+    clearProfile: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
+    const [accountToken, setAccountToken] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [activeProfile, setActiveProfileState] = useState<Profile | null>(null);
+    const [profileToken, setProfileToken] = useState<string | null>(null);
 
     const loadUser = async () => {
         const token = localStorage.getItem('accessToken');
         if (!token) { setLoading(false); return; }
+        setAccountToken(token);
         try {
-            const res = await api.get('/user/me');
+            const res = await api.get('/auth/me');
             setUser(res.data);
         } catch {
             localStorage.removeItem('accessToken');
+            setAccountToken(null);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => { loadUser(); }, []);
+    useEffect(() => {
+        // Restore profile from localStorage on mount
+        const savedProfile = localStorage.getItem('activeProfile');
+        const savedProfileToken = localStorage.getItem('profileToken');
+        if (savedProfile && savedProfileToken) {
+            try {
+                setActiveProfileState(JSON.parse(savedProfile));
+                setProfileToken(savedProfileToken);
+            } catch {
+                localStorage.removeItem('activeProfile');
+                localStorage.removeItem('profileToken');
+            }
+        }
+        loadUser();
+    }, []);
 
     const login = async (email: string, password: string) => {
         const res = await api.post('/auth/login', { email, password });
-        localStorage.setItem('accessToken', res.data.accessToken);
+        const token = res.data.accessToken;
+        localStorage.setItem('accessToken', token);
+        setAccountToken(token);
         setUser(res.data.user);
     };
 
     const register = async (name: string, email: string, password: string) => {
         const res = await api.post('/auth/register', { name, email, password });
-        localStorage.setItem('accessToken', res.data.accessToken);
+        const token = res.data.accessToken;
+        localStorage.setItem('accessToken', token);
+        setAccountToken(token);
         setUser(res.data.user);
     };
 
-    const logout = () => {
+    const switchProfile = () => {
+        localStorage.removeItem('profileToken');
+        localStorage.removeItem('activeProfile');
+        setProfileToken(null);
+        setActiveProfileState(null);
+        window.location.href = '/profiles';
+    };
+
+    const fullLogout = () => {
+        localStorage.removeItem('profileToken');
         localStorage.removeItem('accessToken');
-        api.post('/auth/logout').catch(() => { });
+        localStorage.removeItem('activeProfile');
+        setAccountToken(null);
         setUser(null);
-        window.location.href = '/login';
+        setProfileToken(null);
+        setActiveProfileState(null);
+        window.location.href = '/setup';
+    };
+
+    const setActiveProfile = (profile: Profile, token: string) => {
+        localStorage.setItem('activeProfile', JSON.stringify(profile));
+        localStorage.setItem('profileToken', token);
+        setActiveProfileState(profile);
+        setProfileToken(token);
+    };
+
+    const clearProfile = () => {
+        localStorage.removeItem('activeProfile');
+        localStorage.removeItem('profileToken');
+        setActiveProfileState(null);
+        setProfileToken(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser: loadUser }}>
+        <AuthContext.Provider value={{
+            user, accountToken, loading,
+            login, register, switchProfile, fullLogout, refreshUser: loadUser,
+            activeProfile, profileToken, setActiveProfile, clearProfile
+        }}>
             {children}
         </AuthContext.Provider>
     );

@@ -1,4 +1,4 @@
-const { v4: uuidv4 } = require('uuid');
+const { randomUUID: uuidv4 } = require('crypto');
 const pool = require('../../config/db');
 const genAI = require('../../config/gemini');
 
@@ -57,12 +57,12 @@ const uploadFoodImage = async (req, res, next) => {
         }
 
         const id = uuidv4();
-        const logDate = date || new Date().toISOString().split('T')[0];
+        const logDate = date || new Date().toISOString();
         await pool.query(
-            `INSERT INTO food_logs (id, user_id, logged_at, meal_type, items_json, total_calories, total_protein, total_fat, total_carbs)
-       VALUES (?,?,?,?,?,?,?,?,?)`,
+            `INSERT INTO food_logs (id, user_id, profile_id, logged_at, meal_type, items_json, total_calories, total_protein, total_fat, total_carbs)
+       VALUES (?,?,?,?,?,?,?,?,?,?)`,
             [
-                id, req.user.userId, logDate, meal_type,
+                id, req.user.userId, req.user.profile_id, logDate, meal_type,
                 JSON.stringify(analysis.items),
                 analysis.total_calories, analysis.total_protein_g,
                 analysis.total_fat_g, analysis.total_carbs_g,
@@ -96,11 +96,11 @@ const addManualEntry = async (req, res, next) => {
             { calories: 0, protein: 0, fat: 0, carbs: 0 }
         );
         const id = uuidv4();
-        const logDate = date || new Date().toISOString().split('T')[0];
+        const logDate = date || new Date().toISOString();
         await pool.query(
-            `INSERT INTO food_logs (id, user_id, logged_at, meal_type, items_json, total_calories, total_protein, total_fat, total_carbs)
-       VALUES (?,?,?,?,?,?,?,?,?)`,
-            [id, req.user.userId, logDate, meal_type || 'snack',
+            `INSERT INTO food_logs (id, user_id, profile_id, logged_at, meal_type, items_json, total_calories, total_protein, total_fat, total_carbs)
+       VALUES (?,?,?,?,?,?,?,?,?,?)`,
+            [id, req.user.userId, req.user.profile_id, logDate, meal_type || 'snack',
                 JSON.stringify(items), totals.calories, totals.protein, totals.fat, totals.carbs]
         );
         const result = await pool.query('SELECT * FROM food_logs WHERE id = ?', [id]);
@@ -112,11 +112,19 @@ const addManualEntry = async (req, res, next) => {
 
 const getFoodLog = async (req, res, next) => {
     try {
-        const date = req.query.date || new Date().toISOString().split('T')[0];
-        const logs = await pool.query(
-            'SELECT * FROM food_logs WHERE user_id = ? AND logged_at = ? ORDER BY id',
-            [req.user.userId, date]
-        );
+        const date = req.query.date;
+        let logs;
+        if (date) {
+            logs = await pool.query(
+                "SELECT * FROM food_logs WHERE profile_id = ? AND (logged_at = ? OR date(logged_at, 'localtime') = ?) ORDER BY id",
+                [req.user.profile_id, date, date]
+            );
+        } else {
+            logs = await pool.query(
+                "SELECT * FROM food_logs WHERE profile_id = ? AND (logged_at = date('now', 'localtime') OR date(logged_at, 'localtime') = date('now', 'localtime')) ORDER BY id",
+                [req.user.profile_id]
+            );
+        }
         const totals = logs.rows.reduce(
             (acc, row) => ({
                 calories: acc.calories + parseFloat(row.total_calories || 0),
@@ -128,8 +136,8 @@ const getFoodLog = async (req, res, next) => {
         );
 
         const targets = await pool.query(
-            'SELECT daily_calories, protein_g, fat_g, carbs_g FROM nutrition_targets WHERE user_id = ? ORDER BY created_at DESC LIMIT 1',
-            [req.user.userId]
+            'SELECT daily_calories, protein_g, fat_g, carbs_g FROM nutrition_targets WHERE profile_id = ? ORDER BY created_at DESC LIMIT 1',
+            [req.user.profile_id]
         );
 
         res.json({ date, logs: logs.rows, totals, targets: targets.rows[0] || null });
@@ -152,10 +160,10 @@ const updateFoodLog = async (req, res, next) => {
             { calories: 0, protein: 0, fat: 0, carbs: 0 }
         );
         await pool.query(
-            `UPDATE food_logs SET items_json=?, total_calories=?, total_protein=?, total_fat=?, total_carbs=? WHERE id=? AND user_id=?`,
-            [JSON.stringify(items), totals.calories, totals.protein, totals.fat, totals.carbs, id, req.user.userId]
+            `UPDATE food_logs SET items_json=?, total_calories=?, total_protein=?, total_fat=?, total_carbs=? WHERE id=? AND profile_id=?`,
+            [JSON.stringify(items), totals.calories, totals.protein, totals.fat, totals.carbs, id, req.user.profile_id]
         );
-        const result = await pool.query('SELECT * FROM food_logs WHERE id = ? AND user_id = ?', [id, req.user.userId]);
+        const result = await pool.query('SELECT * FROM food_logs WHERE id = ? AND profile_id = ?', [id, req.user.profile_id]);
         if (result.rows.length === 0) return res.status(404).json({ error: 'Log entry not found' });
         res.json(result.rows[0]);
     } catch (err) {
@@ -166,7 +174,7 @@ const updateFoodLog = async (req, res, next) => {
 const deleteFoodLog = async (req, res, next) => {
     try {
         const { id } = req.params;
-        await pool.query('DELETE FROM food_logs WHERE id=? AND user_id=?', [id, req.user.userId]);
+        await pool.query('DELETE FROM food_logs WHERE id=? AND profile_id=?', [id, req.user.profile_id]);
         res.json({ message: 'Food log entry deleted' });
     } catch (err) {
         next(err);
