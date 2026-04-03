@@ -1,6 +1,6 @@
-# 🏋️ FitForge AI — AI-Powered Smart Gym Platform
+# 🏋️ Astraa — AI-Powered Smart Gym Platform
 
-FitForge AI is a full-stack, AI-powered fitness web application that integrates with a custom smart gym machine to deliver real-time form coaching, personalized workout plans, intelligent nutrition tracking, and a complete fitness dashboard — all powered by Google Gemini AI.
+Astraa is a full-stack, AI-powered fitness web application that integrates with a custom smart gym machine to deliver real-time form coaching, personalized workout plans, intelligent nutrition tracking, and a complete fitness dashboard — all powered by Google Gemini AI.
 
 ---
 
@@ -45,7 +45,7 @@ Then open **http://localhost:3000** in your browser.
 ## 🗂️ Project Structure
 
 ```
-FitForge-AI/
+Astraa/
 ├── START.bat                   # One-click Windows launcher
 ├── backend/                    # Node.js REST API
 │   ├── server.js               # Entry point (runs on port 5000)

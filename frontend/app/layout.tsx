@@ -18,7 +18,7 @@ const exo2 = Exo_2({
 });
 
 export const metadata: Metadata = {
-  title: "FitForge AI — Smart Gym OS",
+  title: "Astraa — Smart Gym OS",
   description: "AI-powered fitness OS integrated with custom smart gym machines.",
 };
 

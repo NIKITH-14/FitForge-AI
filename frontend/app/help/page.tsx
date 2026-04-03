@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Dumbbell, Play, Pause, RotateCcw, Maximize2, ChevronLeft } from 'lucide-react';
 
 const TUTORIALS = [
-    { id: 1, title: 'Getting Started with FitForge AI', duration: '3:45', desc: 'Platform overview, account setup, and connecting your smart machine.', emoji: '🚀' },
+    { id: 1, title: 'Getting Started with Astraa', duration: '3:45', desc: 'Platform overview, account setup, and connecting your smart machine.', emoji: '🚀' },
     { id: 2, title: 'How the Smart Machine Works', duration: '5:20', desc: 'Rep counting, resistance measurement, and data transmission to the app.', emoji: '🦾' },
     { id: 3, title: 'AI Form Correction Explained', duration: '4:10', desc: 'How MediaPipe pose detection analyzes your movement and scores form 0–100.', emoji: '🎯' },
     { id: 4, title: 'Reading Your Workout Plan', duration: '2:30', desc: 'Understanding sets, reps, rest times, and weekly progression schedules.', emoji: '📋' },
@@ -36,7 +36,7 @@ export default function HelpPage() {
                         <div style={{ width: 34, height: 34, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', borderRadius: 9, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <Dumbbell className="w-4 h-4 text-white" />
                         </div>
-                        <span className="gradient-text" style={{ fontSize: 18, fontWeight: 800 }}>FitForge AI</span>
+                        <span className="gradient-text" style={{ fontSize: 18, fontWeight: 800 }}>Astraa</span>
                     </div>
                 </div>
 

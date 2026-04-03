@@ -138,7 +138,7 @@ function SetupForm() {
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 40 }}>
           <h1 className="font-orbitron" style={{ fontSize: 22, fontWeight: 900, letterSpacing: '0.3em', color: '#F0F4FF', marginBottom: 6 }}>
-            FITFORGE
+            ASTRAA
           </h1>
           <p className="font-exo2" style={{ fontSize: 12, color: '#7A8AAD', letterSpacing: '0.3em' }}>
             {step === 1 ? 'CREATE ACCOUNT' : 'SETUP PROFILE'}
@@ -161,7 +161,7 @@ function SetupForm() {
               Create Your Account
             </h2>
             <p className="font-exo2" style={{ fontSize: 13, color: '#7A8AAD', marginBottom: 28 }}>
-              Set up your FitForge account to get started
+              Set up your Astraa account to get started
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>

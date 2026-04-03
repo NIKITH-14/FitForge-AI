@@ -73,7 +73,7 @@ export default function Sidebar({ profileId, activeSection, onSectionChange }: S
         <span style={{ fontSize: 18, flexShrink: 0 }}>⚡</span>
         {expanded && (
           <span className="font-orbitron" style={{ fontSize: 13, fontWeight: 900, color: '#F0F4FF', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>
-            FITFORGE
+            ASTRAA
           </span>
         )}
       </div>

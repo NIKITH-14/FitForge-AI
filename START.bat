@@ -1,10 +1,10 @@
 @echo off
-title FitForge AI - Launcher
+title Astraa - Launcher
 color 0A
 
 echo.
 echo  ==========================================
-echo   FitForge AI - Starting Platform...
+echo   Astraa - Starting Platform...
 echo  ==========================================
 echo.
 
@@ -34,13 +34,13 @@ powershell -Command "Get-ChildItem -Path 'backups' -Filter '*.db' | Sort-Object 
 :: ── Launch backend in new window ─────────────────────────
 echo [4/5] Starting Backend API on http://localhost:5000 ...
 cd /d "%~dp0"
-start "FitForge AI - Backend" cmd /k "cd /d "%~dp0backend" && npm run dev"
+start "Astraa - Backend" cmd /k "cd /d "%~dp0backend" && npm run dev"
 
 :: ── Wait 5 seconds then launch frontend ──────────────────
 echo Waiting 5 seconds for backend to initialize...
 timeout /t 5 /nobreak >nul
 echo [5/5] Starting Frontend on http://localhost:3000 ...
-start "FitForge AI - Frontend" cmd /k "cd /d "%~dp0frontend" && npm run dev"
+start "Astraa - Frontend" cmd /k "cd /d "%~dp0frontend" && npm run dev"
 
 :: ── Launch Kiosk Mode ────────────────────────────────────
 echo Waiting 8 seconds for frontend to compile...
@@ -50,7 +50,7 @@ start chrome --kiosk --fullscreen --no-sandbox --disable-infobars --disable-sess
 
 echo.
 echo  ==========================================
-echo   FitForge AI v1.0 is running!
+echo   Astraa v1.0 is running!
 echo  ==========================================
 echo.
 echo  Press any key to close this launcher...

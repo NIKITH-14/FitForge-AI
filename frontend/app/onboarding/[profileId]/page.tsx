@@ -102,7 +102,7 @@ export default function OnboardingPage() {
         {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 36 }}>
           <h1 className="font-orbitron" style={{ fontSize: 22, fontWeight: 900, letterSpacing: '0.3em', color: '#F0F4FF', marginBottom: 6 }}>
-            FITFORGE
+            ASTRAA
           </h1>
           <p className="font-exo2" style={{ fontSize: 12, color: '#7A8AAD', letterSpacing: '0.3em', textTransform: 'uppercase' }}>
             Profile Setup — {activeProfile?.name ?? 'New Profile'}

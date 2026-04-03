@@ -145,7 +145,7 @@ export default function BootScreen() {
               animationDelay: '0.3s',
             }}
           >
-            FITFORGE
+            ASTRAA
           </h1>
 
           <p

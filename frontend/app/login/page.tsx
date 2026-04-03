@@ -38,7 +38,7 @@ export default function LoginPage() {
                     <div style={{ width: 40, height: 40, background: 'linear-gradient(135deg,#7c3aed,#06b6d4)', borderRadius: 11, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                         <Dumbbell className="w-5 h-5 text-white" />
                     </div>
-                    <span className="gradient-text" style={{ fontSize: 22, fontWeight: 800 }}>FitForge AI</span>
+                    <span className="gradient-text" style={{ fontSize: 22, fontWeight: 800 }}>Astraa</span>
                 </div>
 
                 <h1 style={{ fontSize: 28, fontWeight: 800, marginBottom: 6 }}>Welcome back</h1>

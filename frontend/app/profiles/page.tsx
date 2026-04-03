@@ -47,7 +47,7 @@ export default function ProfilesPage() {
           router.push('/setup');
         }
       } catch (e) {
-        setError('Could not connect to FitForge system. Check your connection.');
+        setError('Could not connect to Astraa system. Check your connection.');
       } finally {
         setLoading(false);
       }
@@ -140,7 +140,7 @@ export default function ProfilesPage() {
         {/* Header */}
         <div style={{ textAlign: 'center' }}>
           <p className="font-exo2" style={{ fontSize: 11, letterSpacing: '0.4em', color: '#7A8AAD', marginBottom: 16, textTransform: 'uppercase' }}>
-            FITFORGE AI
+            ASTRAA
           </p>
           <h1
             className="font-orbitron"
